@@ -3,71 +3,73 @@ import "./App.css";
 import { winningConditions } from "./utils/index";
 
 function App() {
-  const [player, setPlayer] = useState("");
-  const [boxes, setBoxes] = useState([]);
-  const [moveX, setMoveX] = useState([]);
-  const [moveO, setMoveO] = useState([]);
-  const [isGameOver, setIsGameOver] = useState(false);
+  const [tile, setTile] = useState(Array(9).fill(null));
+  const [isX, setIsX] = useState(true);
+  const [isGameOver, setIsGameOver] = useState(null);
 
   const handleBoxSelected = (index) => {
-    if (!boxes[index] && !isGameOver) {
-      const copiedTable = [...boxes];
-      copiedTable[index] = player;
-      setBoxes(copiedTable);
-      if (player === "X") {
-        setMoveX((prevMoveX) => [...prevMoveX, index]);
-      } else {
-        setMoveO((prevMoveO) => [...prevMoveO, index]);
-      }
-      setPlayer((prev) => (prev === "X" ? "O" : "X"));
+    if (!tile[index] && !isGameOver) {
+      const copiedTiles = [...tile];
+      copiedTiles[index] = isX ? "X" : "O";
+      setTile(copiedTiles);
+      setIsX((prev) => !prev);
+
+      const selectedTiles = copiedTiles.reduce(
+        (acc, curr, index) => {
+          if (curr === "X") acc.X.push(index);
+          if (curr === "O") acc.O.push(index);
+          return acc;
+        },
+        { X: [], O: [] }
+      );
+
+      copiedTiles.filter((item) => item === null).length <= 4 &&
+        checkWinner(selectedTiles);
     }
   };
 
-  const checkWinner = (item) => {
-    let counter = 0;
-    let checkList = item === "X" ? moveO : moveX;
-    console.log("checkList", checkList);
+  const checkWinner = (selectedTiles) => {
+    const winner = winningConditions.reduce(
+      (acc, curr) => {
+        if (curr.every((item) => selectedTiles.X.includes(item))) {
+          acc.X = true;
+          acc.movesX = selectedTiles.X;
+        }
+        if (curr.every((item) => selectedTiles.O.includes(item))) {
+          acc.O = true;
+          acc.movesO = selectedTiles.O;
+        }
+        return acc;
+      },
+      { X: false, movesX: [], O: false, movesO: [] }
+    );
 
-    winningConditions.forEach((winItem) => {
-      winItem.map((move) => {
-        console.log(checkList.sort().includes(move));
-        checkList.sort().includes(move) && counter++;
-      });
-      if (counter === 3) {
-        setIsGameOver(true);
-      }
-      counter = 0;
-    });
+    if (winner.X || winner.O) {
+      setIsGameOver(winner.X ? "Winner X" : "Winner O");
+    }
+    if (selectedTiles.X.length + selectedTiles.O.length === 9) {
+      setIsGameOver("Draw");
+    }
   };
 
   useEffect(() => {
     clearTable();
   }, []);
 
-  useEffect(() => {
-    if (moveX.length + moveO.length > 4) {
-      checkWinner(player);
-    } else if (moveX.length + moveO.length === 9) {
-      setIsGameOver(true);
-    }
-  }, [moveX, moveO]);
-
   const clearTable = () => {
-    setPlayer("X");
-    setBoxes(Array(9).fill(null));
-    setMoveX([]);
-    setMoveO([]);
-    setIsGameOver(false);
+    setTile(Array(9).fill(null));
+    setIsGameOver(null);
+    setIsX(true);
   };
 
   return (
     <div className="App">
       <h1>Tic Tac Toe</h1>
       <button onClick={clearTable}>New Game</button>
-      {isGameOver ? <h5>Winner {player === "X" ? "O" : "X"}</h5> : null}
+      {isGameOver ? <h5>{isGameOver}</h5> : null}
       <div className="container">
         <div className="box-grid">
-          {boxes.map((item, index) => (
+          {tile.map((item, index) => (
             <div
               key={index}
               className="box"
