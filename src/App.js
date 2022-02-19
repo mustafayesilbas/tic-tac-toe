@@ -46,8 +46,7 @@ function App() {
 
     if (winner.X || winner.O) {
       setIsGameOver(winner.X ? "Winner X" : "Winner O");
-    }
-    if (selectedTiles.X.length + selectedTiles.O.length === 9) {
+    } else if (selectedTiles.X.length + selectedTiles.O.length === 9) {
       setIsGameOver("Draw");
     }
   };
